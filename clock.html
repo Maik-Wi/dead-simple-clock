@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Clock">
+
+  <!-- Apple Touch Icon für iOS -->
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Maik-Wi/dead-simple-clock/refs/heads/main/apple-touch-icon.png">
+  
+  <!-- Standard Icon, das von Android-Browsern genutzt werden kann -->
+  <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Maik-Wi/dead-simple-clock/refs/heads/main/apple-touch-icon.png">
+
+  <!-- Open Graph Meta-Tags -->
+  <meta property="og:title" content="Clock">
+  <meta property="og:description" content="Eine einfache digitale Uhr mit Feuerwerk-Easter-Egg für den Jahreswechsel.">
+  <meta property="og:image" content="https://raw.githubusercontent.com/Maik-Wi/dead-simple-clock/refs/heads/main/preview.png">
+  <meta property="og:url" content="DEINE_SEITEN_URL_HIER">
+  <meta property="og:type" content="website">
+  
+  <title>Clock</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: calc(10px + 10vw);
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+    #uhr {
+      text-align: center;
+      z-index: 1;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="uhr">00:00:00</div>
+  <canvas id="feuerwerk"></canvas>
+
+  <script>
+    const uhrElement = document.getElementById('uhr');
+    const canvas = document.getElementById('feuerwerk');
+    const ctx = canvas.getContext('2d');
+    let fireworksActive = false;
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function updateUhr() {
+      const jetzt = new Date();
+      let stunden = jetzt.getHours();
+      let minuten = jetzt.getMinutes();
+      let sekunden = jetzt.getSeconds();
+
+      stunden = stunden < 10 ? '0' + stunden : stunden;
+      minuten = minuten < 10 ? '0' + minuten : minuten;
+      sekunden = sekunden < 10 ? '0' + sekunden : sekunden;
+
+      uhrElement.textContent = stunden + ':' + minuten + ':' + sekunden;
+
+      // Prüfe auf Neujahrszeit
+      if (jetzt.getMonth() === 0 && jetzt.getDate() === 1 && stunden === '00' && minuten === '00' && sekunden === '00' && !fireworksActive) {
+        startFeuerwerk();
+      }
+    }
+
+    updateUhr();
+    setInterval(updateUhr, 1000);
+
+    // Feuerwerk-Funktionen
+    function startFeuerwerk() {
+      fireworksActive = true;
+      // Starte die Animation für 30 Sekunden
+      setTimeout(() => {
+        fireworksActive = false;
+        particles = [];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }, 30000); // 30 Sekunden
+      animate();
+    }
+
+    function createExplosion(x, y) {
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = Math.random() * 5 + 2;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: Math.random() * 3 + 2,
+          alpha: 1,
+          color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 50%)`
+        });
+      }
+    }
+
+    function animate() {
+      if (!fireworksActive) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Zufällige Explosionen erzeugen
+      if (Math.random() < 0.05) { 
+        createExplosion(Math.random() * canvas.width, Math.random() * canvas.height / 2);
+      }
+
+      // Aktualisiere und zeichne Partikel
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.01;
+        p.radius *= 0.98;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(${hexToRgb(p.color)}, ${p.alpha})`;
+        ctx.fill();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Hilfsfunktion: Konvertiert HSL-Farbe zu RGB-String
+    function hexToRgb(hsl) {
+      // Platzhalter: Gibt Weiß zurück
+      return "255, 255, 255";
+    }
+  </script>
+</body>
+</html>
